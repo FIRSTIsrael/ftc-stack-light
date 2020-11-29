@@ -193,7 +193,10 @@ for (const eventCode of Object.keys(events)) {
     if (!isScorekeeperLogin) await scorekeeperLogin();
     return fetch(`http://${scorekeeperIp}/event/${eventCode}/control/schedule/`)
       .then((res) => res.json())
-      .then((res) => res.schedule);
+      .then((res) => {
+        schedule = res.schedule; // Update globally
+        return schedule;
+      });
   }
 
   function getMatch(id) {
