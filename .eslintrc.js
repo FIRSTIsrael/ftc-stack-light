@@ -1,21 +1,21 @@
 module.exports = {
-  'env': {
-    'commonjs': true,
-    'es6': true,
+  env: {
+    commonjs: true,
+    es6: true
   },
-  'extends': [
-    'google',
-  ],
-  'globals': {
-    'Atomics': 'readonly',
-    'SharedArrayBuffer': 'readonly',
+  extends: ['google'],
+  globals: {
+    Atomics: 'readonly',
+    SharedArrayBuffer: 'readonly'
   },
-  'parserOptions': {
-    'ecmaVersion': 2018,
+  parserOptions: {
+    ecmaVersion: 2018
   },
-  'rules': {
+  rules: {
+    'object-curly-spacing': ['error', 'always'],
     'comma-dangle': ['error', 'never'],
     'require-jsdoc': 0,
-    'max-len': ['warn', { 'code': 135, 'tabWidth': 2 }]
+    indent: 'off',
+    'max-len': ['warn', { code: 120, tabWidth: 2 }]
   }
 };
