@@ -1,0 +1,33 @@
+{
+  "name": "ftc-stack-light",
+  "version": "1.0.0",
+  "description": "The FTC Stack Light used by the FTAs and Field Staff to determine what state the field is in.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint ."
+  },
+  "author": "Ofek Ashery",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FIRSTIsrael/ftc-stack-light.git"
+  },
+  "bugs": {
+    "url": "https://github.com/FIRSTIsrael/ftc-stack-light/issues"
+  },
+  "homepage": "https://github.com/FIRSTIsrael/ftc-stack-light#readme",
+  "dependencies": {
+    "ejs": "^3.1.5",
+    "express": "^4.17.1",
+    "fetch-cookie": "^0.7.3",
+    "html": "^1.0.0",
+    "node-fetch": "^2.6.1",
+    "node-html-parser": "^1.2.4",
+    "ws": "^7.1.2"
+  },
+  "devDependencies": {
+    "eslint": "^6.2.2",
+    "eslint-config-google": "^0.13.0"
+  }
+}

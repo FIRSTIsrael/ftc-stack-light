@@ -1,0 +1,17 @@
+name: Node CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.x
+      - name: eslint
+        run: |
+          npm install
+          npm run lint
+        env:
+          CI: true
