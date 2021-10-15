@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "The FTC Stack Light used by the FTAs and Field Staff to determine what state the field is in.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "lint": "eslint ."
@@ -18,16 +19,15 @@
   },
   "homepage": "https://github.com/FIRSTIsrael/ftc-stack-light#readme",
   "dependencies": {
-    "ejs": "^3.1.5",
+    "ejs": "^3.1.6",
     "express": "^4.17.1",
-    "fetch-cookie": "^0.7.3",
-    "html": "^1.0.0",
-    "node-fetch": "^2.6.1",
-    "node-html-parser": "^1.2.4",
-    "ws": "^7.1.2"
+    "fetch-cookie": "^1.0.0",
+    "node-fetch": "^3.0.0",
+    "node-html-parser": "^5.0.0",
+    "ws": "^8.2.3"
   },
   "devDependencies": {
-    "eslint": "^6.2.2",
-    "eslint-config-google": "^0.13.0"
+    "eslint": "^8.0.1",
+    "eslint-config-google": "^0.14.0"
   }
 }

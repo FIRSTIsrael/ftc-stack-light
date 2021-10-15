@@ -1,4 +1,4 @@
-module.exports = {
+const config = {
   scorekeeper: {
     host: 'localhost:80',
     username: 'local',
@@ -19,3 +19,5 @@ module.exports = {
     }
   }
 };
+
+export default config;

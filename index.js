@@ -1,11 +1,13 @@
-const nodeFetch = require('node-fetch');
-const fetch = require('fetch-cookie')(nodeFetch);
-const WebSocket = require('ws');
-const express = require('express');
-const path = require('path');
-const { parse } = require('node-html-parser');
-const { host: scorekeeperIp, username, password } = require('./config').scorekeeper;
-const { dashboard, events } = require('./config');
+import nodeFetch from 'node-fetch';
+import { default as fetchCookie } from 'fetch-cookie';
+import WebSocket, { WebSocketServer } from 'ws';
+import express from 'express';
+import path from 'path';
+import { parse } from 'node-html-parser';
+import ejs from 'ejs';
+import config from './config.js';
+
+const fetch = fetchCookie(nodeFetch);
 
 const debugWebSockets = false;
 
@@ -19,8 +21,8 @@ const log = (data) => {
   }
 };
 
-for (const eventCode of Object.keys(events)) {
-  const wsPort = events[eventCode];
+for (const eventCode of Object.keys(config.events)) {
+  const wsPort = config.events[eventCode];
 
   let isScorekeeperLogin = false;
   let schedule = [];
@@ -28,7 +30,7 @@ for (const eventCode of Object.keys(events)) {
   let teleopStartTimer;
   let matchEndTimer;
 
-  const wss = new WebSocket.Server({
+  const wss = new WebSocketServer({
     port: wsPort
   });
   const wssBroadcast = (data) => {
@@ -105,12 +107,13 @@ for (const eventCode of Object.keys(events)) {
   };
 
   scorekeeperLogin().then(async (Cookie) => {
+    console.log(Cookie);
     const wsOptions = { headers: { Cookie } };
     console.log(eventCode + ' is running on port ' + wsPort);
     await fetchMatches();
     setInterval(fetchMatches, 10 * 60 * 1000); // Update schedule evey 10 minutes
 
-    new WebSocket(`ws://${scorekeeperIp}/apiv2/stream/?code=${eventCode}`).on('message', (data) => {
+    new WebSocket(`ws://${config.scorekeeper.host}/apiv2/stream/?code=${eventCode}`).on('message', (data) => {
       data = JSON.parse(data);
       const field = data.payload.field;
       if (debugWebSockets) console.log('[API WS]', data.updateType);
@@ -135,7 +138,7 @@ for (const eventCode of Object.keys(events)) {
       callback(data.updateType, data.payload.shortName, field, data.payload);
     });
 
-    new WebSocket(`ws://${scorekeeperIp}/stream/control/schedulechange/?code=${eventCode}`, null, wsOptions).on(
+    new WebSocket(`ws://${config.scorekeeper.host}/stream/control/schedulechange/?code=${eventCode}`, [], wsOptions).on(
       'message',
       (data) => {
         data = JSON.parse(data);
@@ -163,7 +166,7 @@ for (const eventCode of Object.keys(events)) {
       }
     );
 
-    new WebSocket(`ws://${scorekeeperIp}/stream/display/command/?code=${eventCode}`, null, wsOptions).on(
+    new WebSocket(`ws://${config.scorekeeper.host}/stream/display/command/?code=${eventCode}`, [], wsOptions).on(
       'message',
       (data) => {
         data = JSON.parse(data);
@@ -178,10 +181,10 @@ for (const eventCode of Object.keys(events)) {
   });
 
   function scorekeeperLogin() {
-    return fetch(`http://${scorekeeperIp}/callback/`, {
+    return fetch(`http://${config.scorekeeper.host}/callback/`, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       redirect: 'manual',
-      body: `username=${username}&password=${password}&submit=Login&client_name=FormClient`,
+      body: `username=${config.scorekeeper.username}&password=${config.scorekeeper.password}&submit=Login&client_name=FormClient`,
       method: 'POST'
     }).then((res) => {
       isScorekeeperLogin = true;
@@ -191,7 +194,7 @@ for (const eventCode of Object.keys(events)) {
 
   async function fetchMatches() {
     if (!isScorekeeperLogin) await scorekeeperLogin();
-    return fetch(`http://${scorekeeperIp}/event/${eventCode}/control/schedule/`)
+    return fetch(`http://${config.scorekeeper.host}/event/${eventCode}/control/schedule/`)
       .then((res) => res.json())
       .then((res) => {
         schedule = res.schedule; // Update globally
@@ -209,39 +212,39 @@ for (const eventCode of Object.keys(events)) {
   }
 }
 
-if (dashboard.active) {
+if (config.dashboard.active) {
   dashboardApp.set('view engine', 'html');
-  dashboardApp.engine('html', require('ejs').renderFile);
-  const viewsPath = path.join(__dirname, 'dashboard') + '/';
+  dashboardApp.engine('html', ejs.renderFile);
+  const viewsPath = path.join(path.resolve(), 'dashboard') + '/';
 
-  if (dashboard.event.divisions) {
+  if (config.dashboard.event.divisions) {
     dashboardApp.get('/', (req, res) => {
       res.render(viewsPath + 'home.html', {
-        eventName: dashboard.event.name,
-        divisions: dashboard.event.divisions
+        eventName: config.dashboard.event.name,
+        divisions: config.dashboard.event.divisions
       });
     });
     dashboardApp.get('/:division', (req, res) => {
       const division = parseInt(req.params.division) || 0;
       res.render(viewsPath + 'event.html', {
-        eventName: dashboard.event.name,
-        divisionName: dashboard.event.divisions[division],
-        eventCode: `${dashboard.event.code}_${division}`
+        eventName: config.dashboard.event.name,
+        divisionName: config.dashboard.event.divisions[division],
+        eventCode: `${config.dashboard.event.code}_${division}`
       });
     });
   } else {
     dashboardApp.get('/', (req, res) => {
       res.render(viewsPath + 'event.html', {
-        eventName: dashboard.event.name,
+        eventName: config.dashboard.event.name,
         divisionName: null,
-        eventCode: dashboard.event.code
+        eventCode: config.dashboard.event.code
       });
     });
   }
 
   dashboardApp.get('/api/:event/cycle', async (req, res) => {
     let difference = 'Unknown';
-    const html = await fetch(`http://${scorekeeperIp}/event/${req.params.event}/reports/cycle/`).then((res) =>
+    const html = await fetch(`http://${config.scorekeeper.host}/event/${req.params.event}/reports/cycle/`).then((res) =>
       res.text()
     );
     try {
@@ -265,5 +268,7 @@ if (dashboard.active) {
     wssBroadcast(['green', feild, 'blink', 15]);
     res.send('');
   });
-  dashboardApp.listen(dashboard.port, () => console.log('Dashboard is running on port ' + dashboard.port));
+  dashboardApp.listen(config.dashboard.port, () =>
+    console.log('Dashboard is running on port ' + config.dashboard.port)
+  );
 }
