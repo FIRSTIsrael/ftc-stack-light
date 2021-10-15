@@ -15,8 +15,9 @@ The Stack Light is used by the FTAs and Field Staff to determine what state the 
 Red Flashing = Disconnected from server<br/>
 Red + Amber Flashing = Match Aborted
 
-
 ### Running locally
+
+> Node.js 12 and later is required.
 
 1. Clone the repository and run `npm install`
 2. Setup your configuration in `config.js`
