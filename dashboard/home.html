@@ -5,56 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>FTA / Head Ref Dashboard</title>
     <meta name="author" content="FIRST Israel" />
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/design.css" />
     <meta name="theme-color" content="#004159" />
-    <style>
-      .header {
-        background-color: #004159;
-        color: rgba(255, 255, 255, 0.5);
-        padding: 1rem;
-        margin: 1rem 0;
-        border-radius: 0.25rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        display: flex;
-        align-items: center;
-        fill: #fff;
-      }
-      .btns {
-        max-width: 300px;
-        width: 100%;
-      }
-      .btn {
-        width: 100%;
-        margin: 5px;
-        background-color: #369aae;
-        color: #ffffff;
-      }
-      .btn:hover {
-        background-color: #004159;
-        color: #ffffff;
-      }
-    </style>
   </head>
-  <body class="bg-light">
-    <main role="main" class="container">
+  <body>
+    <main>
       <div class="header">
         <svg width="96px" height="48px" viewBox="0 0 3200 1350">
           <path
             d="M2165 1354l-142 -137c56,-38 103,-83 140,-133 1,-1 1,-1 1,-2l346 -359 10 -11 45 -47 -423 -406 -95 99 -105 109 -71 74 -135 140 0 0 -12 12 39 38 182 178c-40,38 -90,70 -148,94 0,0 0,0 0,0l-120 -115 -118 -113 -80 -76 191 -199 96 -100 104 -108 260 -271 685 656 -651 678zm-1430 -1365l0 0 0 0 -117 12 -254 1389 118 12 0 0 535 -234c1,1 2,2 3,2 127,112 318,184 532,184 148,0 286,-35 398,-93l215 207 667 -695 0 -113 0 0 0 0 0 0 0 0 -700 -670 -236 245c-97,-38 -250,-68 -367,-68 -169,0 -344,58 -466,133l-329 -311 0 0 0 0 0 0zm1519 789c3,-20 5,-40 5,-60 0,-114 -51,-233 -138,-323l23 -23 350 336 -290 302c31,-72 51,-160 51,-223 0,-3 0,-6 0,-9zm-291 115l-165 -161 140 -146c50,42 87,91 106,146 -1,9 -3,18 -5,27 -12,48 -37,93 -76,134zm-27 241c-26,13 -53,25 -81,35 -96,35 -199,53 -307,53 -153,0 -298,-36 -419,-105 -67,-38 -123,-84 -167,-137 -17,-20 -32,-41 -44,-63 -26,-44 -43,-90 -51,-138 -4,-21 -5,-41 -5,-61 0,-73 21,-144 63,-210l111 113c-8,26 -11,52 -11,78 0,22 3,44 8,66 8,31 21,61 39,90 14,23 32,45 52,65 55,55 130,99 217,126 66,20 136,31 208,31 58,0 116,-7 171,-21 32,-8 62,-18 90,-30 66,-27 123,-65 167,-110 44,-45 73,-96 87,-151 5,-22 8,-44 8,-66 0,-62 -23,-132 -61,-186l95 -99c81,85 129,197 129,304 0,20 -2,40 -5,61 -15,89 -62,174 -137,246 -44,42 -96,79 -156,109zm-1093 -351c0,1 0,2 1,2 0,3 -1,6 -1,8 0,33 21,113 29,145 0,0 0,0 0,0l-109 47 104 -541 43 42c-48,73 -72,150 -72,232 0,21 2,42 6,65zm254 64c-1,-2 -3,-4 -4,-5 -17,-27 -29,-54 -36,-83 -1,-3 -1,-6 -2,-9 8,-28 21,-56 38,-81l132 131 -129 47zm502 75l114 109c-53,13 -108,20 -164,20 -70,0 -137,-10 -201,-30 -8,-3 -17,-6 -25,-8l252 -113 24 23zm-1110 450l244 -1360 349 330 109 103 83 79 198 189 0 86 84 81 -263 120c-59,-25 -111,-59 -152,-99 -1,-1 -2,-2 -3,-3l202 -94 -475 -442 -9 -9 -11 61 -112 584 -17 91 30 -13 0 -1 152 -65c24,50 58,97 101,139l-510 223zm1184 -902l-204 212 -179 -170c77,-33 167,-53 264,-53 41,0 81,4 119,10zm-147 -276c110,0 258,28 352,63l-4 4 -104 108 0 0c-65,-22 -138,-34 -215,-34 -134,0 -257,37 -347,98l-1 -1 -109 -103 -10 -9c119,-72 274,-126 440,-126z"
+            fill="#fff"
           />
         </svg>
-        <div class="lh-100">
-          <h6 class="mb-0 text-white lh-100">FTA / Head Ref Dashboard</h6>
-          <small><%= eventName %></small>
+        <div>
+          <h1>FTA / Head Ref Dashboard</h1>
+          <h2><%= eventName %></h2>
         </div>
       </div>
 
-      <div class="my-3 p-3 bg-white rounded shadow-sm d-flex justify-content-center">
-        <div class="btns">
-          <% for(var i = 0; i < divisions.length; i++) { %>
-          <a href="/<%= i %>" class="btn"><%= divisions[i] %> Division</a>
-          <% } %>
-        </div>
+      <div class="card">
+        <% for(var i = 0; i < divisions.length; i++) { %>
+        <a href="/<%= i %>" class="button"><%= divisions[i] %> Division</a>
+        <% } %>
       </div>
     </main>
   </body>

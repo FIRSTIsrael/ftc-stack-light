@@ -213,9 +213,11 @@ for (const eventCode of Object.keys(config.events)) {
 }
 
 if (config.dashboard.active) {
+  const viewsPath = path.join(path.resolve(), 'dashboard') + '/';
   dashboardApp.set('view engine', 'html');
   dashboardApp.engine('html', ejs.renderFile);
-  const viewsPath = path.join(path.resolve(), 'dashboard') + '/';
+
+  dashboardApp.use('/static', express.static('dashboard/static'));
 
   if (config.dashboard.event.divisions) {
     dashboardApp.get('/', (req, res) => {
@@ -261,6 +263,7 @@ if (config.dashboard.active) {
       res.json({ difference: 'Unknown', avgCycleTime: 'Unknown' });
     }
   });
+
   dashboardApp.get('/api/:event/reset/:field', async (req, res) => {
     const feild = parseInt(req.params.field);
     console.log(`[${req.params.event}] Reset Field #${feild}`);
@@ -268,6 +271,7 @@ if (config.dashboard.active) {
     wssBroadcast(['green', feild, 'blink', 15]);
     res.send('');
   });
+
   dashboardApp.listen(config.dashboard.port, () =>
     console.log('Dashboard is running on port ' + config.dashboard.port)
   );
