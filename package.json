@@ -4,9 +4,10 @@
   "description": "The FTC Stack Light used by the FTAs and Field Staff to determine what state the field is in.",
   "main": "index.js",
   "type": "module",
+  "prettier": "@firstisrael/prettier-config",
   "scripts": {
     "start": "node index.js",
-    "lint": "eslint ."
+    "prettier": "prettier --write ."
   },
   "author": "Ofek Ashery",
   "license": "MIT",
@@ -27,7 +28,7 @@
     "ws": "^8.2.3"
   },
   "devDependencies": {
-    "eslint": "^8.0.1",
-    "eslint-config-google": "^0.14.0"
+    "@firstisrael/prettier-config": "^1.1.0",
+    "prettier": "2.4.1"
   }
 }

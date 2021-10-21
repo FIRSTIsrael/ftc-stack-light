@@ -14,7 +14,7 @@ const debugWebSockets = false;
 const dashboardApp = express();
 const broadcasts = {};
 let lastPrint = '';
-const log = (data) => {
+const log = data => {
   if (data !== lastPrint) {
     lastPrint = data;
     console.log(data);
@@ -33,8 +33,8 @@ for (const eventCode of Object.keys(config.events)) {
   const wss = new WebSocketServer({
     port: wsPort
   });
-  const wssBroadcast = (data) => {
-    wss.clients.forEach((client) => {
+  const wssBroadcast = data => {
+    wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(data));
       }
@@ -95,9 +95,9 @@ for (const eventCode of Object.keys(config.events)) {
       case 'MATCH_INIT':
         const { redInit, blueInit } = payload;
         log(
-          `${matchName} - Waiting for ${!redInit ? 'RED' : ''}${!redInit && !blueInit ? ' AND ' : ''}${
-            !blueInit ? 'BLUE' : ''
-          } `
+          `${matchName} - Waiting for ${!redInit ? 'RED' : ''}${
+            !redInit && !blueInit ? ' AND ' : ''
+          }${!blueInit ? 'BLUE' : ''} `
         );
         red(redInit ? 'on' : 'off');
         blue(blueInit ? 'on' : 'off');
@@ -106,78 +106,83 @@ for (const eventCode of Object.keys(config.events)) {
     }
   };
 
-  scorekeeperLogin().then(async (Cookie) => {
+  scorekeeperLogin().then(async Cookie => {
     console.log(Cookie);
     const wsOptions = { headers: { Cookie } };
     console.log(eventCode + ' is running on port ' + wsPort);
     await fetchMatches();
     setInterval(fetchMatches, 10 * 60 * 1000); // Update schedule evey 10 minutes
 
-    new WebSocket(`ws://${config.scorekeeper.host}/apiv2/stream/?code=${eventCode}`).on('message', (data) => {
-      data = JSON.parse(data);
-      const field = data.payload.field;
-      if (debugWebSockets) console.log('[API WS]', data.updateType);
-      if (data.updateType === 'MATCH_START') {
-        pickupControllersTimer = setTimeout(() => {
-          callback('PICKUP_CONTROLLERS', data.payload.shortName, field);
-        }, 30 * 1000);
-        teleopStartTimer = setTimeout(() => {
-          callback('TELEOP_START', data.payload.shortName, field);
-        }, 38 * 1000);
-        matchEndTimer = setTimeout(() => {
-          callback('MATCH_END', data.payload.shortName, field);
-        }, 158 * 1000);
-      } else if (data.updateType === 'MATCH_ABORT') {
-        clearTimeout(pickupControllersTimer);
-        clearTimeout(teleopStartTimer);
-        clearTimeout(matchEndTimer);
-        pickupControllersTimer = null;
-        teleopStartTimer = null;
-        matchEndTimer = null;
+    new WebSocket(`ws://${config.scorekeeper.host}/apiv2/stream/?code=${eventCode}`).on(
+      'message',
+      data => {
+        data = JSON.parse(data);
+        const field = data.payload.field;
+        if (debugWebSockets) console.log('[API WS]', data.updateType);
+        if (data.updateType === 'MATCH_START') {
+          pickupControllersTimer = setTimeout(() => {
+            callback('PICKUP_CONTROLLERS', data.payload.shortName, field);
+          }, 30 * 1000);
+          teleopStartTimer = setTimeout(() => {
+            callback('TELEOP_START', data.payload.shortName, field);
+          }, 38 * 1000);
+          matchEndTimer = setTimeout(() => {
+            callback('MATCH_END', data.payload.shortName, field);
+          }, 158 * 1000);
+        } else if (data.updateType === 'MATCH_ABORT') {
+          clearTimeout(pickupControllersTimer);
+          clearTimeout(teleopStartTimer);
+          clearTimeout(matchEndTimer);
+          pickupControllersTimer = null;
+          teleopStartTimer = null;
+          matchEndTimer = null;
+        }
+        callback(data.updateType, data.payload.shortName, field, data.payload);
       }
-      callback(data.updateType, data.payload.shortName, field, data.payload);
+    );
+
+    new WebSocket(
+      `ws://${config.scorekeeper.host}/stream/control/schedulechange/?code=${eventCode}`,
+      [],
+      wsOptions
+    ).on('message', data => {
+      data = JSON.parse(data);
+      if (debugWebSockets) console.log('[CONTROL WS]', data.type);
+      const name = getMatchName(data.params[0]);
+      if (data.type === 'MATCH_INIT') {
+        const [match, redInit, blueInit] = data.params;
+        getMatch(match).then(matchData => {
+          const field = matchData.field;
+          callback(data.type, name, field, { redInit, blueInit });
+          // if (redInit && blueInit) {
+          //   if (matchData.randomization > -1) {
+          //     callback('MATCH_READY', name, field);
+          //   } else {
+          //     callback('WAIT_RANDOM', name, field);
+          //   }
+          // }
+        });
+      } else if (data.type === 'REVIEW_SUBMITTED') {
+        // Red & Blue
+        if (data.params[8] && data.params[9]) {
+          callback('SCORE_SUBMITTED', name, data.params[4]);
+        }
+      }
     });
 
-    new WebSocket(`ws://${config.scorekeeper.host}/stream/control/schedulechange/?code=${eventCode}`, [], wsOptions).on(
-      'message',
-      (data) => {
-        data = JSON.parse(data);
-        if (debugWebSockets) console.log('[CONTROL WS]', data.type);
-        const name = getMatchName(data.params[0]);
-        if (data.type === 'MATCH_INIT') {
-          const [match, redInit, blueInit] = data.params;
-          getMatch(match).then((matchData) => {
-            const field = matchData.field;
-            callback(data.type, name, field, { redInit, blueInit });
-            // if (redInit && blueInit) {
-            //   if (matchData.randomization > -1) {
-            //     callback('MATCH_READY', name, field);
-            //   } else {
-            //     callback('WAIT_RANDOM', name, field);
-            //   }
-            // }
-          });
-        } else if (data.type === 'REVIEW_SUBMITTED') {
-          // Red & Blue
-          if (data.params[8] && data.params[9]) {
-            callback('SCORE_SUBMITTED', name, data.params[4]);
-          }
-        }
+    new WebSocket(
+      `ws://${config.scorekeeper.host}/stream/display/command/?code=${eventCode}`,
+      [],
+      wsOptions
+    ).on('message', data => {
+      data = JSON.parse(data);
+      if (debugWebSockets) console.log('[DISPLAY WS]', data.type);
+      const name = getMatchName(data.params[0]);
+      const field = data.params[2];
+      if (data.type === 'RANDOMIZE') {
+        callback('RANDOMIZE', name, field);
       }
-    );
-
-    new WebSocket(`ws://${config.scorekeeper.host}/stream/display/command/?code=${eventCode}`, [], wsOptions).on(
-      'message',
-      (data) => {
-        data = JSON.parse(data);
-        if (debugWebSockets) console.log('[DISPLAY WS]', data.type);
-        const name = getMatchName(data.params[0]);
-        const field = data.params[2];
-        if (data.type === 'RANDOMIZE') {
-          callback('RANDOMIZE', name, field);
-        }
-      }
-    );
+    });
   });
 
   function scorekeeperLogin() {
@@ -186,7 +191,7 @@ for (const eventCode of Object.keys(config.events)) {
       redirect: 'manual',
       body: `username=${config.scorekeeper.username}&password=${config.scorekeeper.password}&submit=Login&client_name=FormClient`,
       method: 'POST'
-    }).then((res) => {
+    }).then(res => {
       isScorekeeperLogin = true;
       return res.headers.raw()['set-cookie'][0].split(';')[0];
     });
@@ -195,15 +200,15 @@ for (const eventCode of Object.keys(config.events)) {
   async function fetchMatches() {
     if (!isScorekeeperLogin) await scorekeeperLogin();
     return fetch(`http://${config.scorekeeper.host}/event/${eventCode}/control/schedule/`)
-      .then((res) => res.json())
-      .then((res) => {
+      .then(res => res.json())
+      .then(res => {
         schedule = res.schedule; // Update globally
         return schedule;
       });
   }
 
   function getMatch(id) {
-    return fetchMatches().then((list) => list[id - 1]);
+    return fetchMatches().then(list => list[id - 1]);
   }
 
   function getMatchName(id) {
@@ -246,9 +251,9 @@ if (config.dashboard.active) {
 
   dashboardApp.get('/api/:event/cycle', async (req, res) => {
     let difference = 'Unknown';
-    const html = await fetch(`http://${config.scorekeeper.host}/event/${req.params.event}/reports/cycle/`).then((res) =>
-      res.text()
-    );
+    const html = await fetch(
+      `http://${config.scorekeeper.host}/event/${req.params.event}/reports/cycle/`
+    ).then(res => res.text());
     try {
       const root = parse(html);
       const table = root.querySelector('#report table');
@@ -257,7 +262,8 @@ if (config.dashboard.active) {
         const diffText = row.childNodes[15].text.trim();
         if (diffText) difference = diffText;
       });
-      const avgCycleTime = root.querySelectorAll('#report div')[1].querySelector('.col-2').text || 'Unknown';
+      const avgCycleTime =
+        root.querySelectorAll('#report div')[1].querySelector('.col-2').text || 'Unknown';
       res.json({ difference, avgCycleTime });
     } catch (error) {
       res.json({ difference: 'Unknown', avgCycleTime: 'Unknown' });
