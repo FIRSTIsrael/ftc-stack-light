@@ -32,14 +32,16 @@
 
       <div class="card" style="margin-top: 1rem">
         <div><strong>Average Cycle Time:</strong> <span id="avgCycleTime">Unknown</span></div>
-        <div style="margin-top: 0.5rem"><strong>Schedule:</strong> <span id="difference">Unknown</span></div>
+        <div style="margin-top: 0.5rem">
+          <strong>Schedule:</strong> <span id="difference">Unknown</span>
+        </div>
       </div>
     </main>
     <script>
       const fetchCycleTime = () => {
         fetch('/api/<%= eventCode %>/cycle')
-          .then((res) => res.json())
-          .then((json) => {
+          .then(res => res.json())
+          .then(json => {
             document.querySelector('#avgCycleTime').textContent = json.avgCycleTime;
             document.querySelector('#difference').textContent = json.difference;
           });
@@ -47,7 +49,7 @@
       fetchCycleTime();
       setInterval(fetchCycleTime, 2 * 60 * 1000);
 
-      const resetField = (field) => {
+      const resetField = field => {
         fetch(`/api/<%= eventCode %>/reset/${field}`);
       };
     </script>
