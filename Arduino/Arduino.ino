@@ -132,6 +132,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     break;
   }
   case WStype_CONNECTED:
+    ledEvent("blue", "blink", 4);
     Serial.println("[WS] Connected!");
     break;
   case WStype_TEXT:
