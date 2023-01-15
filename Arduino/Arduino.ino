@@ -127,7 +127,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
       const int field = json[1];
       const String state = json[2];
       int seconds = json[3];
-      if (field == fieldNum) {
+      if (field == fieldNum || field == -1) {
         ledEvent(color, state, seconds);
       }
       break;
