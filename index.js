@@ -113,7 +113,7 @@ for (const eventCode of Object.keys(config.events)) {
     await fetchMatches();
     setInterval(fetchMatches, 10 * 60 * 1000); // Update schedule evey 10 minutes
 
-    new WebSocket(`ws://${config.scorekeeper.host}/apiv2/stream/?code=${eventCode}`).on(
+    new WebSocket(`ws://${config.scorekeeper.host}/api/v2/stream/?code=${eventCode}`).on(
       'message',
       data => {
         data = JSON.parse(data);
@@ -142,31 +142,33 @@ for (const eventCode of Object.keys(config.events)) {
     );
 
     new WebSocket(
-      `ws://${config.scorekeeper.host}/stream/control/schedulechange/?code=${eventCode}`,
+      `ws://${config.scorekeeper.host}/stream/control/?code=${eventCode}`,
       [],
       wsOptions
     ).on('message', data => {
       data = JSON.parse(data);
       if (debugWebSockets) console.log('[CONTROL WS]', data.type);
-      const name = getMatchName(data.params[0]);
       if (data.type === 'MATCH_INIT') {
-        const [match, redInit, blueInit] = data.params;
-        getMatch(match).then(matchData => {
+        getMatch(data.number).then(matchData => {
           const field = matchData.field;
-          callback(data.type, name, field, { redInit, blueInit });
+          callback(data.type, matchData.shortName, field, {
+            redInit: data.redInitSubmitted,
+            blueInit: data.blueInitSubmitted
+          });
           // if (redInit && blueInit) {
           //   if (matchData.randomization > -1) {
-          //     callback('MATCH_READY', name, field);
+          //     callback('MATCH_READY', matchName, field);
           //   } else {
-          //     callback('WAIT_RANDOM', name, field);
+          //     callback('WAIT_RANDOM', matchName, field);
           //   }
           // }
         });
       } else if (data.type === 'REVIEW_SUBMITTED') {
-        // Red & Blue
-        if (data.params[8] && data.params[9]) {
-          callback('SCORE_SUBMITTED', name, data.params[4]);
-        }
+        getMatch(data.number).then(matchData => {
+          if (data.redReviewSubmitted && data.blueReviewSubmitted) {
+            callback('SCORE_SUBMITTED', matchData.shortName, matchData.field);
+          }
+        });
       }
     });
 
@@ -177,10 +179,9 @@ for (const eventCode of Object.keys(config.events)) {
     ).on('message', data => {
       data = JSON.parse(data);
       if (debugWebSockets) console.log('[DISPLAY WS]', data.type);
-      const name = getMatchName(data.params[0]);
-      const field = data.params[2];
+      const name = getMatchName(data.params.number);
       if (data.type === 'RANDOMIZE') {
-        callback('RANDOMIZE', name, field);
+        callback('RANDOMIZE', name, data.params.field);
       }
     });
   });
