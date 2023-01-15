@@ -27,37 +27,34 @@ const int PIN_AMBER = D4;
 ESP8266WiFiMulti WiFiMulti;
 WebSocketsClient webSocket;
 typedef std::function<void(int index)> TimeoutCallback;
-class Led
-{
-public:
-  int pin = 0;
-  bool isTimeoutRunning;
-  int timeoutStart;
-  int timeoutSeconds;
-  TimeoutCallback timeoutCallback;
-  bool isBlink;
-  long previousMillis = 0;
-  Led(int _pin)
-  {
-    pin = _pin;
-  }
-  void turnOn()
-  {
-    digitalWrite(pin, LOW);
-  }
-  void turnOff()
-  {
-    digitalWrite(pin, HIGH);
-  }
-  void toggle()
-  {
-    digitalWrite(pin, !digitalRead(pin));
-  }
+
+class Led {
+  public:
+    int pin = 0;
+    bool isTimeoutRunning;
+    int timeoutStart;
+    int timeoutSeconds;
+    TimeoutCallback timeoutCallback;
+    bool isBlink;
+    long previousMillis = 0;
+
+    Led(int _pin) {
+      pin = _pin;
+    }
+
+    void turnOn() {
+      digitalWrite(pin, LOW);
+    }
+    void turnOff() {
+      digitalWrite(pin, HIGH);
+    }
+    void toggle() {
+      digitalWrite(pin, !digitalRead(pin));
+    }
 };
 Led leds[] = {Led(PIN_RED), Led(PIN_BLUE), Led(PIN_GREEN), Led(PIN_AMBER)};
 
-void ledEvent(const String color, const String state, int seconds)
-{
+void ledEvent(const String color, const String state, int seconds) {
   int index;
   if (color == "red")
     index = 0;
@@ -70,12 +67,10 @@ void ledEvent(const String color, const String state, int seconds)
 
   leds[index].isTimeoutRunning = false;
 
-  if (state == "on")
-  {
+  if (state == "on") {
     leds[index].turnOn();
     leds[index].isBlink = false;
-    if (seconds > 0)
-    {
+    if (seconds > 0) {
       leds[index].timeoutStart = millis();
       leds[index].timeoutSeconds = seconds;
       leds[index].timeoutCallback = [](int index) -> void {
@@ -83,11 +78,8 @@ void ledEvent(const String color, const String state, int seconds)
       };
       leds[index].isTimeoutRunning = true;
     }
-  }
-  else if (state == "off")
-  {
-    if (seconds > 0)
-    {
+  } else if (state == "off") {
+    if (seconds > 0) {
       leds[index].timeoutStart = millis();
       leds[index].timeoutSeconds = seconds;
       leds[index].timeoutCallback = [](int index) -> void {
@@ -95,18 +87,13 @@ void ledEvent(const String color, const String state, int seconds)
         leds[index].turnOff();
       };
       leds[index].isTimeoutRunning = true;
-    }
-    else
-    {
+    } else {
       leds[index].isBlink = false;
       leds[index].turnOff();
     }
-  }
-  else if (state == "blink")
-  {
+  } else if (state == "blink") {
     leds[index].isBlink = true;
-    if (seconds > 0)
-    {
+    if (seconds > 0) {
       leds[index].timeoutStart = millis();
       leds[index].timeoutSeconds = seconds;
       leds[index].timeoutCallback = [](int index) -> void {
@@ -118,56 +105,49 @@ void ledEvent(const String color, const String state, int seconds)
   }
 }
 
-void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
-{
-  switch (type)
-  {
-  case WStype_DISCONNECTED:
-  {
-    Serial.println("[WS] Disconnected!");
-    ledEvent("red", "blink", 0);
-    ledEvent("blue", "off", 0);
-    ledEvent("green", "off", 0);
-    ledEvent("amber", "off", 0);
-    break;
-  }
-  case WStype_CONNECTED:
-    ledEvent("blue", "blink", 4);
-    Serial.println("[WS] Connected!");
-    break;
-  case WStype_TEXT:
-  {
-    Serial.printf("[WS] %s\n", payload);
-    DynamicJsonDocument json(1024);
-    deserializeJson(json, payload);
-    const String color = json[0];
-    const int field = json[1];
-    const String state = json[2];
-    int seconds = json[3];
-    if (field == fieldNum)
-    {
-      ledEvent(color, state, seconds);
+void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
+  switch (type) {
+    case WStype_DISCONNECTED:{
+      Serial.println("[WS] Disconnected!");
+      ledEvent("red", "blink", 0);
+      ledEvent("blue", "off", 0);
+      ledEvent("green", "off", 0);
+      ledEvent("amber", "off", 0);
+      break;
     }
-    break;
-  }
-  case WStype_PING:
-    // Pong will be send automatically
-    Serial.println("[WS] Got ping");
-    break;
-  case WStype_PONG:
-    // Got an answer to a ping we send
-    Serial.println("[WS] Got pong");
-    break;
+    case WStype_CONNECTED:
+      ledEvent("blue", "blink", 4);
+      Serial.println("[WS] Connected!");
+      break;
+    case WStype_TEXT: {
+      Serial.printf("[WS] %s\n", payload);
+      DynamicJsonDocument json(1024);
+      deserializeJson(json, payload);
+      const String color = json[0];
+      const int field = json[1];
+      const String state = json[2];
+      int seconds = json[3];
+      if (field == fieldNum) {
+        ledEvent(color, state, seconds);
+      }
+      break;
+    }
+    case WStype_PING:
+      // Pong will be send automatically
+      Serial.println("[WS] Got ping");
+      break;
+    case WStype_PONG:
+      // Got an answer to a ping we send
+      Serial.println("[WS] Got pong");
+      break;
   }
 }
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
   Serial.setDebugOutput(debug);
 
-  for (uint8_t t = 4; t > 0; t--)
-  {
+  for (uint8_t t = 4; t > 0; t--) {
     Serial.printf("[SETUP] BOOT WAIT %d...\n", t);
     Serial.flush();
     delay(1000);
@@ -175,14 +155,12 @@ void setup()
 
   WiFiMulti.addAP(ssid, password);
 
-  while (WiFiMulti.run() != WL_CONNECTED)
-  {
+  while (WiFiMulti.run() != WL_CONNECTED) {
     delay(100);
   }
   Serial.printf("\nWelcome to field #%d!\n\n", fieldNum);
 
-  for (Led led : leds)
-  {
+  for (Led led : leds) {
     pinMode(led.pin, OUTPUT); // LED pin as output
     led.turnOff();
   }
@@ -192,21 +170,17 @@ void setup()
   webSocket.onEvent(webSocketEvent);
 }
 
-void loop()
-{
+void loop() {
   webSocket.loop();
   unsigned long currentMillis = millis();
 
-  for (int i = 0; i < 4; i++)
-  {
-    if (leds[i].isTimeoutRunning && ((millis() - leds[i].timeoutStart) >= leds[i].timeoutSeconds * 1000))
-    {
+  for (int i = 0; i < 4; i++) {
+    if (leds[i].isTimeoutRunning && ((millis() - leds[i].timeoutStart) >= leds[i].timeoutSeconds * 1000)) {
       leds[i].isTimeoutRunning = false; // // prevent this code being run more then once
       leds[i].timeoutCallback(i);
     }
 
-    if (leds[i].isBlink && currentMillis - leds[i].previousMillis >= blinkInterval)
-    {
+    if (leds[i].isBlink && currentMillis - leds[i].previousMillis >= blinkInterval) {
       leds[i].previousMillis = currentMillis;
       leds[i].toggle();
     }
